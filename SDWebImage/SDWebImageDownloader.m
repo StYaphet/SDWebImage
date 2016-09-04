@@ -15,11 +15,13 @@ static NSString *const kCompletedCallbackKey = @"completed";
 
 @interface SDWebImageDownloader () <NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
+//  私有属性
 @property (strong, nonatomic) NSOperationQueue *downloadQueue;
 @property (weak, nonatomic) NSOperation *lastAddedOperation;
 @property (assign, nonatomic) Class operationClass;
 @property (strong, nonatomic) NSMutableDictionary *URLCallbacks;
 @property (strong, nonatomic) NSMutableDictionary *HTTPHeaders;
+
 // This queue is used to serialize the handling of the network responses of all the download operation in a single queue
 @property (SDDispatchQueueSetterSementics, nonatomic) dispatch_queue_t barrierQueue;
 
@@ -31,6 +33,7 @@ static NSString *const kCompletedCallbackKey = @"completed";
 @implementation SDWebImageDownloader
 
 + (void)initialize {
+    //  如果使用了SDNetworkActivityIndicator的话
     // Bind SDNetworkActivityIndicator if available (download it here: http://github.com/rs/SDNetworkActivityIndicator )
     // To use it, just add #import "SDNetworkActivityIndicator.h" in addition to the SDWebImage import
     if (NSClassFromString(@"SDNetworkActivityIndicator")) {
@@ -53,6 +56,7 @@ static NSString *const kCompletedCallbackKey = @"completed";
     }
 }
 
+//  单例的创建方法
 + (SDWebImageDownloader *)sharedDownloader {
     static dispatch_once_t once;
     static id instance;
@@ -64,19 +68,41 @@ static NSString *const kCompletedCallbackKey = @"completed";
 
 - (id)init {
     if ((self = [super init])) {
+        
+        //  注意在init方法里都是使用的实例变量
+        
         _operationClass = [SDWebImageDownloaderOperation class];
+        
+        
+        //  默认对_shouldDecompressImages进行解压缩
         _shouldDecompressImages = YES;
+        
+        //  默认下载顺序是 先进先出
         _executionOrder = SDWebImageDownloaderFIFOExecutionOrder;
+        
+        
+        //  设置_downloadQueue
+        //  创建一个NSOperationQueue用来向里边添加NSOperation
         _downloadQueue = [NSOperationQueue new];
+        //  最大并行执行的 操作数量是 6 个
         _downloadQueue.maxConcurrentOperationCount = 6;
         _downloadQueue.name = @"com.hackemist.SDWebImageDownloader";
+        
+        
+        
+        //  为每个url设置一个callback储存在NSMutableDictionary里，方便查找
         _URLCallbacks = [NSMutableDictionary new];
 #ifdef SD_WEBP
         _HTTPHeaders = [@{@"Accept": @"image/webp,image/*;q=0.8"} mutableCopy];
 #else
         _HTTPHeaders = [@{@"Accept": @"image/*;q=0.8"} mutableCopy];
 #endif
+        
+        
         _barrierQueue = dispatch_queue_create("com.hackemist.SDWebImageDownloaderBarrierQueue", DISPATCH_QUEUE_CONCURRENT);
+        
+        
+        
         _downloadTimeout = 15.0;
 
         NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -95,6 +121,7 @@ static NSString *const kCompletedCallbackKey = @"completed";
 }
 
 - (void)dealloc {
+    //  这里为什么
     [self.session invalidateAndCancel];
     self.session = nil;
 
@@ -103,6 +130,8 @@ static NSString *const kCompletedCallbackKey = @"completed";
 }
 
 - (void)setValue:(NSString *)value forHTTPHeaderField:(NSString *)field {
+    //  HTTPHeaders是一个字典
+    //  通过将value设置为nil还可以去掉那个键值对
     if (value) {
         self.HTTPHeaders[field] = value;
     }

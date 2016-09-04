@@ -10,8 +10,16 @@
 #import "SDWebImageCompat.h"
 #import "SDWebImageOperation.h"
 
+
 typedef NS_OPTIONS(NSUInteger, SDWebImageDownloaderOptions) {
+    
+    
+    
     SDWebImageDownloaderLowPriority = 1 << 0,
+    
+    
+    
+    
     SDWebImageDownloaderProgressiveDownload = 1 << 1,
 
     /**
@@ -51,6 +59,7 @@ typedef NS_OPTIONS(NSUInteger, SDWebImageDownloaderOptions) {
     SDWebImageDownloaderHighPriority = 1 << 7,
 };
 
+//  执行顺序
 typedef NS_ENUM(NSInteger, SDWebImageDownloaderExecutionOrder) {
     /**
      * Default value. All download operations will execute in queue style (first-in-first-out).
@@ -63,43 +72,57 @@ typedef NS_ENUM(NSInteger, SDWebImageDownloaderExecutionOrder) {
     SDWebImageDownloaderLIFOExecutionOrder
 };
 
+//  开始下载的通知名
 extern NSString *const SDWebImageDownloadStartNotification;
+//  停止下载的通知名
 extern NSString *const SDWebImageDownloadStopNotification;
 
+//  处理下载进度的block，通过接收到的数据大小与期望的数据大小来实现
 typedef void(^SDWebImageDownloaderProgressBlock)(NSInteger receivedSize, NSInteger expectedSize);
 
+//  下载完成后的block
 typedef void(^SDWebImageDownloaderCompletedBlock)(UIImage *image, NSData *data, NSError *error, BOOL finished);
 
+//  对头信息进行过滤？？？一会看实现的时候再看
 typedef NSDictionary *(^SDWebImageDownloaderHeadersFilterBlock)(NSURL *url, NSDictionary *headers);
 
 /**
  * Asynchronous downloader dedicated and optimized for image loading.
  */
+
+//  异步的图片下载器
 @interface SDWebImageDownloader : NSObject
 
 /**
  * Decompressing images that are downloaded and cached can improve performance but can consume lot of memory.
  * Defaults to YES. Set this to NO if you are experiencing a crash due to excessive memory consumption.
  */
+
+//  指示是否对下载或者缓存的图片进行解压缩，可以提供更好的性能，但是会消耗许多内存
+//  默认是YES，可以设置为NO
 @property (assign, nonatomic) BOOL shouldDecompressImages;
 
+//  最多可以并行下载的数量，猜猜超过这个数量之后会根据下载顺序来指定某个下载取消
 @property (assign, nonatomic) NSInteger maxConcurrentDownloads;
 
 /**
  * Shows the current amount of downloads that still need to be downloaded
  */
+//  当前的下载数量
 @property (readonly, nonatomic) NSUInteger currentDownloadCount;
 
 
 /**
  *  The timeout value (in seconds) for the download operation. Default: 15.0.
  */
+//  超过这个事件就不下载了
 @property (assign, nonatomic) NSTimeInterval downloadTimeout;
 
 
 /**
  * Changes download operations execution order. Default value is `SDWebImageDownloaderFIFOExecutionOrder`.
  */
+//  下载顺序
 @property (assign, nonatomic) SDWebImageDownloaderExecutionOrder executionOrder;
 
 /**
@@ -107,11 +130,13 @@ typedef NSDictionary *(^SDWebImageDownloaderHeadersFilterBlock)(NSURL *url, NSDi
  *
  *  @return global shared instance of downloader class
  */
+//  单例
 + (SDWebImageDownloader *)sharedDownloader;
 
 /**
  *  Set the default URL credential to be set for request operations.
  */
+//
 @property (strong, nonatomic) NSURLCredential *urlCredential;
 
 /**
@@ -138,6 +163,7 @@ typedef NSDictionary *(^SDWebImageDownloaderHeadersFilterBlock)(NSURL *url, NSDi
  * @param value The value for the header field. Use `nil` value to remove the header.
  * @param field The name of the header field to set.
  */
+//  NSDictionary
 - (void)setValue:(NSString *)value forHTTPHeaderField:(NSString *)field;
 
 /**
@@ -178,6 +204,8 @@ typedef NSDictionary *(^SDWebImageDownloaderHeadersFilterBlock)(NSURL *url, NSDi
  *
  * @return A cancellable SDWebImageOperation
  */
+
+//  下载执行下载
 - (id <SDWebImageOperation>)downloadImageWithURL:(NSURL *)url
                                          options:(SDWebImageDownloaderOptions)options
                                         progress:(SDWebImageDownloaderProgressBlock)progressBlock
